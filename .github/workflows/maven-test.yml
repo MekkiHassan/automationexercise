@@ -18,13 +18,23 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # التعديل الجوهري هنا: استخدام Maven لتنزيل متصفحات Playwright ومكتبات الـ Linux
-      - name: Install Playwright Browsers and Dependencies
-        run: mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps"
+      # 1. تثبيت المكتبات بالأسماء الجديدة المتوافقة مع Ubuntu 24.04 (Noble)
+      - name: Install System Dependencies for Ubuntu 24.04
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2t64 libvpx9 libevent-2.1-7 libopus0 libsecret-1-0 libhyphen0 libx264-dev
 
+      # 2. تنزيل متصفح Chromium الخاص بـ Playwright مع إجبار النظام على تخطي الفحص القديم
+      - name: Install Playwright Browsers
+        env:
+          PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS: true
+        run: mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install chromium"
+
+      # 3. تشغيل الاختبارات في الوضع الخفي (Headless)
       - name: Run Tests
         run: mvn clean test -Dheadless=true
 
+      # 4. رفع نتائج Allure Report كـ Artifact في نهاية التشغيل
       - name: Upload Allure Report
         if: always()
         uses: actions/upload-artifact@v4
@@ -32,6 +42,7 @@ jobs:
           name: allure-results
           path: target/allure-results
 
+      # 5. إرسال النتيجة فوراً إلى إيميلك (سواء نجاح أو فشل)
       - name: Send email on completion
         if: always()
         uses: dawidd6/action-send-mail@v3
