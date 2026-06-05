@@ -56,7 +56,7 @@ jobs:
           subject: "GitHub Actions Status: ${{ job.status }}"
           body: |
             التيست خلص وحالته: ${{ job.status }}
-            التقرير موجود أونلاين هنا: https://mekkihassan02.github.io/automationexercise/
+            التقرير موجود أونلاين هنا: https://mekkihassan.github.io/automationexercise/
           to: mekkihassan02@gmail.com
           from: GitHub Actions
 
