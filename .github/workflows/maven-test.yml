@@ -56,3 +56,10 @@ jobs:
           body: "The test run has finished with status: ${{ job.status }}. Please check the GitHub Actions tab for details."
           to: mekkihassan02@gmail.com
           from: GitHub Actions
+
+      - name: Deploy to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+            github_token: ${{ secrets.GITHUB_TOKEN }}
+            publish_dir: ./target/allure-results
