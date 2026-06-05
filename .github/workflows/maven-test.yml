@@ -63,3 +63,6 @@ jobs:
         with:
             github_token: ${{ secrets.GITHUB_TOKEN }}
             publish_dir: ./target/allure-results
+            keep_files: true  # عشان يحافظ على التقارير القديمة لو حبيت
+            user_name: 'github-actions[bot]'
+            user_email: 'github-actions[bot]@users.noreply.github.com'
