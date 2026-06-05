@@ -54,5 +54,5 @@ jobs:
           secure: true
           subject: "GitHub Actions Status: ${{ job.status }}"
           body: "The test run has finished with status: ${{ job.status }}. Please check the GitHub Actions tab for details."
-          to: mekko.hassan@gmail.com
+          to: mekkihassan02@gmail.com
           from: GitHub Actions
