@@ -6,7 +6,7 @@ import org.testng.ITestResult;
 import org.testng.annotations.*;
 
 public class BaseTest {
-
+    ///     test push CICD
     // الـ Playwright والـ Browser لازم يبقوا ThreadLocal عشان Parallel Execution
     // لو خليتهم Static، الـ Threads هتتخانق عليهم
     protected static ThreadLocal<Playwright> playwright = new ThreadLocal<>();
