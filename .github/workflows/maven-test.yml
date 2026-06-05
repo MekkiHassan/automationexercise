@@ -2,7 +2,7 @@ name: Automation Exercise CI
 
 on:
   push:
-    branches: [ master ] # تأكدنا إن الفرع عندك اسمه master
+    branches: [ master ]
   pull_request:
     branches: [ master ]
 
@@ -30,3 +30,16 @@ jobs:
         with:
           name: allure-results
           path: target/allure-results
+
+      - name: Send email on completion
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{secrets.MAIL_USERNAME}}
+          password: ${{secrets.MAIL_PASSWORD}}
+          subject: "GitHub Actions Status: ${{ job.status }}"
+          body: "The test run has finished with status: ${{ job.status }}. Please check the GitHub Actions tab for details."
+          to: mekko.hassan@gmail.com
+          from: GitHub Actions
