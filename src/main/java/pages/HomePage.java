@@ -29,6 +29,8 @@ public class HomePage {
         // الآن نحن نقرأ من الـ Nested Map
         Map<String, String> categoryData = categoryLinks.get(categoryName.toUpperCase());
         String href = categoryData.get("href"); // استخراج الـ href من الـ Object
+// انتظر حتى تظهر القائمة الجانبية بالكامل أولاً
+        page.locator(".left-sidebar").waitFor(new Locator.WaitForOptions().setTimeout(30000));
 
         page.locator(".left-sidebar")
                 .locator("a[href='" + href + "']")
