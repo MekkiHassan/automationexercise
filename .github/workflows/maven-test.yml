@@ -18,10 +18,9 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Install Playwright Dependencies
-        run: |
-          sudo apt-get update
-          npx playwright install-deps chromium
+      # التعديل الجوهري هنا: استخدام Maven لتنزيل متصفحات Playwright ومكتبات الـ Linux
+      - name: Install Playwright Browsers and Dependencies
+        run: mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps"
 
       - name: Run Tests
         run: mvn clean test -Dheadless=true
