@@ -55,11 +55,19 @@ public class LoginPage {
     }
 
 
-    // دالة مجمعة (Convenience Method) لتسريع كتابة الـ Tests
+    /*// دالة مجمعة (Convenience Method) لتسريع كتابة الـ Tests
     public void loginUser(String email, String password) {
         enterLoginEmail(email);
         enterLoginPassword(password);
         clickLoginButton();
+    }*/
+
+
+    public HomePage loginUser(String email, String password) {
+        enterLoginEmail(email);
+        enterLoginPassword(password);
+        clickLoginButton();
+        return new HomePage(page); // هنا إحنا بنرجع الـ Object بتاع الصفحة الجديدة
     }
 }
 

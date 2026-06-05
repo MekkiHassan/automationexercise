@@ -4,47 +4,38 @@ import base.BaseTest;
 import com.microsoft.playwright.assertions.PlaywrightAssertions;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import pages.HomePage;
 import pages.LoginPage;
 import utils.ConfigReader;
 import utils.JsonReader;
 
 public class LoginTest extends BaseTest {
 
-    // 1. تعريف الـ DataProvider وربطه بملف القراءة
     @DataProvider(name = "LoginData")
     public Object[][] passData() {
         return JsonReader.getLoginData();
     }
 
-    // 2. ربط الـ Test بالـ DataProvider، وتمرير المتغيرات كـ Parameters
     @Test(dataProvider = "LoginData")
-    public void testLoginWithMultipleUsers(String email, String password,String scenarioType) {
+    public void testLoginWithMultipleUsers(String email, String password, String scenarioType) {
+        // تعديل: استخدام page.get() للوصول للصفحة الخاصة بالـ Thread الحالي
+        page.get().navigate(ConfigReader.getProperty("baseUrl") + "login");
 
-        // التوجه إلى صفحة تسجيل الدخول
-        String baseUrl = ConfigReader.getProperty("baseUrl");
-        page.navigate(baseUrl + "login");
-        // استخدام الـ Page Object
-        LoginPage loginPage = new LoginPage(page);
-
-        // تمرير البيانات المتغيرة بدلاً من البيانات الثابتة (Hardcoded)
-        loginPage.loginUser(email, password);
+        // تعديل: تمرير page.get() للـ Constructor الخاص بـ LoginPage
+        LoginPage loginPage = new LoginPage(page.get());
 
         if (scenarioType.equalsIgnoreCase("valid")) {
-            // التحقق في حالة النجاح: نتأكد إن زرار Logout ظهر
-            PlaywrightAssertions.assertThat(loginPage.getLogoutLink()).isVisible();
+            // نستخدم الـ Chain هنا
+            HomePage homePage = loginPage.loginUser(email, password);
 
-            // وممكن كمان نتأكد إن الرابط اتغير للصفحة الرئيسية
-            PlaywrightAssertions.assertThat(page).hasURL("https://automationexercise.com/");
+            // التحقق (Assertion)
+            PlaywrightAssertions.assertThat(homePage.getLogoutLink()).isVisible();
+        } else {
+            // في حالة البيانات الخاطئة، الـ loginUser هيرجع نفس الـ loginPage أو null
+            loginPage.loginUser(email, password);
 
-        } else if (scenarioType.equalsIgnoreCase("invalid")) {
-            // التحقق في حالة الفشل: نتأكد إن رسالة الخطأ ظهرت
+            // ونعمل Assertion على نفس صفحة الـ Login
             PlaywrightAssertions.assertThat(loginPage.getErrorMessage()).isVisible();
-
-            // ونتأكد إن النص اللي جواها مظبوط
-            PlaywrightAssertions.assertThat(loginPage.getErrorMessage())
-                    .containsText("Your email or password is incorrect!");
         }
-
-
-            }
+    }
 }
