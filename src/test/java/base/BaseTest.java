@@ -24,7 +24,6 @@ public class BaseTest {
     @BeforeMethod
     public void setUp() {
         // الأولوية هنا للـ System Property (التي نمررها من الـ GitHub Action)
-        // إذا لم نمرر شيء، سيأخذ القيمة من ملف الـ config.properties
         String headlessEnv = System.getProperty("headless");
         boolean isHeadless = (headlessEnv != null) ?
                 Boolean.parseBoolean(headlessEnv) :
@@ -40,8 +39,11 @@ public class BaseTest {
         context.set(ctx);
         page.set(ctx.newPage());
 
-        // التنقل للرابط من الـ config
+        // الانتقال للرابط من الـ config
         page.get().navigate(config.getProperty("baseUrl"));
+
+        // إضافة هذا السطر لضمان تحميل الصفحة بالكامل قبل أي خطوة تالية
+        page.get().waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
     }
 
     @AfterMethod
