@@ -44,7 +44,7 @@ jobs:
 
       # 5. إرسال النتيجة فوراً إلى إيميلك (سواء نجاح أو فشل)
       - name: Send email on completion
-        if: always()
+        if: success() || failure()
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
