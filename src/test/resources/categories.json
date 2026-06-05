@@ -1,0 +1,14 @@
+{
+  "WOMEN": {
+    "href": "#Women",
+    "expectedText": "Tops"
+  },
+  "MEN": {
+    "href": "#Men",
+    "expectedText": "Jeans"
+  },
+  "KIDS": {
+    "href": "#Kids",
+    "expectedText": "Dress"
+  }
+}
