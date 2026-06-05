@@ -22,7 +22,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libgbm-dev
 
       - name: Run Tests
-        run: mvn clean test
+        run: mvn clean test -Dheadless=true
 
       - name: Upload Allure Report
         if: always()

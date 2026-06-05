@@ -4,23 +4,34 @@ import com.microsoft.playwright.*;
 import io.qameta.allure.Attachment;
 import org.testng.ITestResult;
 import org.testng.annotations.*;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
 
 public class BaseTest {
-    ///     test push CICD
-    ///     test push CICD2
-    // الـ Playwright والـ Browser لازم يبقوا ThreadLocal عشان Parallel Execution
-    // لو خليتهم Static، الـ Threads هتتخانق عليهم
     protected static ThreadLocal<Playwright> playwright = new ThreadLocal<>();
     protected static ThreadLocal<Browser> browser = new ThreadLocal<>();
     protected static ThreadLocal<BrowserContext> context = new ThreadLocal<>();
     protected static ThreadLocal<Page> page = new ThreadLocal<>();
+    protected static Properties config = new Properties();
+
+    @BeforeClass
+    public void loadConfig() throws IOException {
+        FileInputStream fis = new FileInputStream("src/test/resources/config.properties");
+        config.load(fis);
+    }
 
     @BeforeMethod
     public void setUp() {
-        // كل Thread بيفتح الـ Playwright والـ Browser الخاص بيه.. أيوة إنت سمعت صح!
-        // ده أبطأ حاجة بسيطة بس مستحيل يقع (Flaky-free)
+        // الأولوية هنا للـ System Property (التي نمررها من الـ GitHub Action)
+        // إذا لم نمرر شيء، سيأخذ القيمة من ملف الـ config.properties
+        String headlessEnv = System.getProperty("headless");
+        boolean isHeadless = (headlessEnv != null) ?
+                Boolean.parseBoolean(headlessEnv) :
+                Boolean.parseBoolean(config.getProperty("headless"));
+
         Playwright pw = Playwright.create();
-        Browser br = pw.chromium().launch(new BrowserType.LaunchOptions().setHeadless(false));
+        Browser br = pw.chromium().launch(new BrowserType.LaunchOptions().setHeadless(isHeadless));
 
         playwright.set(pw);
         browser.set(br);
@@ -28,6 +39,9 @@ public class BaseTest {
         BrowserContext ctx = br.newContext();
         context.set(ctx);
         page.set(ctx.newPage());
+
+        // التنقل للرابط من الـ config
+        page.get().navigate(config.getProperty("baseUrl"));
     }
 
     @AfterMethod
@@ -39,12 +53,9 @@ public class BaseTest {
             page.get().close();
         }
         if (context.get() != null) context.get().close();
-
-        // إغلاق الـ Browser والـ Playwright الخاص بالـ Thread ده
         if (browser.get() != null) browser.get().close();
         if (playwright.get() != null) playwright.get().close();
 
-        // تنظيف نهائي
         page.remove();
         context.remove();
         browser.remove();
