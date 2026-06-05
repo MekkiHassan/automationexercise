@@ -32,6 +32,7 @@ public class HomePageTest extends BaseTest {
         // نستخدم page.get() للحصول على الصفحة الخاصة بالـ Thread الحالي
         page.get().navigate(ConfigReader.getProperty("baseUrl") + "products");
 
+        page.get().waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
         HomePage homePage = new HomePage(page.get());
 
         homePage.selectCategory(category);
@@ -53,6 +54,7 @@ public class HomePageTest extends BaseTest {
     public void testAddMultipleProductsToCart(String productName) {
         // نستخدم page.get() في كل الأماكن
         page.get().navigate(ConfigReader.getProperty("baseUrl") + "products");
+        page.get().waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
 
         HomePage homePage = new HomePage(page.get());
         CartPage cartPage = new CartPage(page.get());

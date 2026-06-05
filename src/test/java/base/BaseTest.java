@@ -23,7 +23,6 @@ public class BaseTest {
 
     @BeforeMethod
     public void setUp() {
-        // الأولوية هنا للـ System Property (التي نمررها من الـ GitHub Action)
         String headlessEnv = System.getProperty("headless");
         boolean isHeadless = (headlessEnv != null) ?
                 Boolean.parseBoolean(headlessEnv) :
@@ -35,14 +34,26 @@ public class BaseTest {
         playwright.set(pw);
         browser.set(br);
 
-        BrowserContext ctx = br.newContext();
+        // التعديل الجوهري: إضافة User-Agent حقيقي وتكبير الشاشة لتخطي حماية Cloudflare
+        BrowserContext ctx = br.newContext(new Browser.NewContextOptions()
+                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                .setViewportSize(1920, 1080)
+        );
+
+        // التعديل الثاني: منع تحميل إعلانات جوجل اللي بتعمل Overlays وتخفي العناصر
+        ctx.route("**/*", route -> {
+            String url = route.request().url();
+            if (url.contains("googleads") || url.contains("googlesyndication") || url.contains("adservice")) {
+                route.abort(); // اقفل الإعلان
+            } else {
+                route.resume(); // كمل تحميل عادي
+            }
+        });
+
         context.set(ctx);
         page.set(ctx.newPage());
 
-        // الانتقال للرابط من الـ config
         page.get().navigate(config.getProperty("baseUrl"));
-
-        // إضافة هذا السطر لضمان تحميل الصفحة بالكامل قبل أي خطوة تالية
         page.get().waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
     }
 
