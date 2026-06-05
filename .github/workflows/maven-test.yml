@@ -9,6 +9,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # إضافة صلاحية الكتابة عشان الـ Bot يعرف يرفع ملفات الـ Pages
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -18,23 +21,24 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # 1. تثبيت المكتبات بالأسماء الجديدة المتوافقة مع Ubuntu 24.04 (Noble)
       - name: Install System Dependencies for Ubuntu 24.04
         run: |
           sudo apt-get update
           sudo apt-get install -y libasound2t64 libvpx9 libevent-2.1-7 libopus0 libsecret-1-0 libhyphen0 libx264-dev
 
-      # 2. تنزيل متصفح Chromium الخاص بـ Playwright مع إجبار النظام على تخطي الفحص القديم
       - name: Install Playwright Browsers
         env:
           PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS: true
         run: mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install chromium"
 
-      # 3. تشغيل الاختبارات في الوضع الخفي (Headless)
       - name: Run Tests
         run: mvn clean test -Dheadless=true
 
-      # 4. رفع نتائج Allure Report كـ Artifact في نهاية التشغيل
+      # خطوة إضافية: توليد التقرير في مجلد مستقل عشان الـ Pages يقرأه صح
+      - name: Generate Allure Report
+        if: always()
+        run: mvn allure:report
+
       - name: Upload Allure Report
         if: always()
         uses: actions/upload-artifact@v4
@@ -42,7 +46,6 @@ jobs:
           name: allure-results
           path: target/allure-results
 
-      # 5. إرسال النتيجة فوراً إلى إيميلك (سواء نجاح أو فشل)
       - name: Send email on completion
         if: success() || failure()
         uses: dawidd6/action-send-mail@v3
@@ -53,7 +56,9 @@ jobs:
           password: ${{secrets.MAIL_PASSWORD}}
           secure: true
           subject: "GitHub Actions Status: ${{ job.status }}"
-          body: "The test run has finished with status: ${{ job.status }}. Please check the GitHub Actions tab for details."
+          body: |
+            التيست خلص وحالته: ${{ job.status }}
+            التقرير موجود أونلاين هنا: https://mekkihassan02.github.io/automationexercise/
           to: mekkihassan02@gmail.com
           from: GitHub Actions
 
@@ -61,8 +66,9 @@ jobs:
         if: always()
         uses: peaceiris/actions-gh-pages@v3
         with:
-            github_token: ${{ secrets.GITHUB_TOKEN }}
-            publish_dir: ./target/allure-results
-            keep_files: true  # عشان يحافظ على التقارير القديمة لو حبيت
-            user_name: 'github-actions[bot]'
-            user_email: 'github-actions[bot]@users.noreply.github.com'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # بنرفع المجلد اللي جواه التقرير الجاهز
+          publish_dir: ./target/site/allure-maven-plugin
+          keep_files: true
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
