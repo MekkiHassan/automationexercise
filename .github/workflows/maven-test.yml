@@ -20,7 +20,20 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # خطوة مهمة جداً: تثبيت مكتبات النظام اللي بيحتاجها Playwright للعمل في Linux بدون شاشة
+      - name: Install System Dependencies for Ubuntu
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+          libasound2t64 \
+          libvpx9 \
+          libevent-2.1-7t64 \
+          libopus0 \
+          libsecret-1-0 \
+          libhyphen0 \
+          libx264-dev \
+          libgbm-dev \
+          libgtk-3-0t64
+
       - name: Install Playwright and Dependencies
         run: |
           mvn install -DskipTests
