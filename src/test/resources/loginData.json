@@ -9,11 +9,7 @@
     "password": "wrongpassword",
     "scenarioType": "invalid"
   },
-  {
-  "email": "invaliduser@test.com",
-  "password": "wrongpassword",
-    "scenarioType": "invalid"
-  },
+
   {
     "email": "Mekki@gmail.com",
     "password": "123456",

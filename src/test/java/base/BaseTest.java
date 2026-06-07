@@ -4,8 +4,9 @@ import com.microsoft.playwright.*;
 import io.qameta.allure.Attachment;
 import org.testng.ITestResult;
 import org.testng.annotations.*;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 public class BaseTest {
@@ -15,68 +16,58 @@ public class BaseTest {
     protected static ThreadLocal<Page> page = new ThreadLocal<>();
     protected static Properties config = new Properties();
 
-    @BeforeClass
-    public void loadConfig() throws IOException {
-        FileInputStream fis = new FileInputStream("src/test/resources/config.properties");
-        config.load(fis);
+    static {
+        try (InputStream input = BaseTest.class.getClassLoader().getResourceAsStream("config.properties")) {
+            if (input != null) config.load(input);
+        } catch (IOException e) { e.printStackTrace(); }
+    }
+
+    public static void blockAds(BrowserContext ctx) {
+        ctx.route("**/*", route -> {
+            String url = route.request().url();
+            if (url.contains("googleads") || url.contains("googlesyndication") || url.contains("doubleclick")) {
+                route.abort();
+            } else {
+                route.resume();
+            }
+        });
+    }
+
+    public static void generateAuthFile() {
+        Playwright pw = Playwright.create();
+        Browser br = pw.chromium().launch();
+        BrowserContext ctx = br.newContext();
+        blockAds(ctx);
+        Page pg = ctx.newPage();
+        pg.navigate(config.getProperty("baseUrl") + "login");
+        pg.locator("form").filter(new com.microsoft.playwright.Locator.FilterOptions().setHasText("Login")).getByPlaceholder("Email Address").fill("Mekki@gmail.com");
+        pg.getByPlaceholder("Password").fill("123456");
+        pg.getByRole(com.microsoft.playwright.options.AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Login")).click();
+        pg.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
+        ctx.storageState(new BrowserContext.StorageStateOptions().setPath(Paths.get("auth.json")));
+        ctx.close(); br.close(); pw.close();
     }
 
     @BeforeMethod
     public void setUp() {
-        String headlessEnv = System.getProperty("headless");
-        boolean isHeadless = (headlessEnv != null) ?
-                Boolean.parseBoolean(headlessEnv) :
-                Boolean.parseBoolean(config.getProperty("headless"));
-
         Playwright pw = Playwright.create();
-        Browser br = pw.chromium().launch(new BrowserType.LaunchOptions().setHeadless(isHeadless));
-
+        Browser br = pw.chromium().launch(new BrowserType.LaunchOptions().setHeadless(Boolean.parseBoolean(config.getProperty("headless", "false"))));
         playwright.set(pw);
         browser.set(br);
-
-        // التعديل الجوهري: إضافة User-Agent حقيقي وتكبير الشاشة لتخطي حماية Cloudflare
-        BrowserContext ctx = br.newContext(new Browser.NewContextOptions()
-                .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-                .setViewportSize(1920, 1080)
-        );
-
-        // التعديل الثاني: منع تحميل إعلانات جوجل اللي بتعمل Overlays وتخفي العناصر
-        ctx.route("**/*", route -> {
-            String url = route.request().url();
-            if (url.contains("googleads") || url.contains("googlesyndication") || url.contains("adservice")) {
-                route.abort(); // اقفل الإعلان
-            } else {
-                route.resume(); // كمل تحميل عادي
-            }
-        });
-
-        context.set(ctx);
-        page.set(ctx.newPage());
-
-        page.get().navigate(config.getProperty("baseUrl"));
-        page.get().waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
     }
 
     @AfterMethod
     public void tearDown(ITestResult result) {
         if (page.get() != null) {
-            if (result.getStatus() == ITestResult.FAILURE) {
-                saveScreenshot(page.get().screenshot());
-            }
+            if (result.getStatus() == ITestResult.FAILURE) saveScreenshot(page.get().screenshot());
             page.get().close();
         }
         if (context.get() != null) context.get().close();
         if (browser.get() != null) browser.get().close();
         if (playwright.get() != null) playwright.get().close();
-
-        page.remove();
-        context.remove();
-        browser.remove();
-        playwright.remove();
+        page.remove(); context.remove(); browser.remove(); playwright.remove();
     }
 
     @Attachment(value = "Failure Screenshot", type = "image/png")
-    public byte[] saveScreenshot(byte[] screenShot) {
-        return screenShot;
-    }
+    public byte[] saveScreenshot(byte[] screenShot) { return screenShot; }
 }

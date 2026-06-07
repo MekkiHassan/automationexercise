@@ -1,4 +1,4 @@
-name: Automation Exercise CI
+name: Automation Exercise CICD
 
 on:
   push:
@@ -57,7 +57,7 @@ jobs:
           body: |
             التيست خلص وحالته: ${{ job.status }}
             التقرير موجود أونلاين هنا: https://mekkihassan.github.io/automationexercise/
-          to: mekkihassan02@gmail.com
+          to: mekkihassan02@gmail.com,mekkohassan@gmail.com
           from: GitHub Actions
 
       - name: Deploy to GitHub Pages
