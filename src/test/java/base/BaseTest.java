@@ -51,7 +51,16 @@ public class BaseTest {
     @BeforeMethod
     public void setUp() {
         Playwright pw = Playwright.create();
-        Browser br = pw.chromium().launch(new BrowserType.LaunchOptions().setHeadless(Boolean.parseBoolean(config.getProperty("headless", "false"))));
+
+        // الحل السينيور:
+        // لو إحنا في GitHub Actions (عن طريق التأكد من وجود متغير بيئة CI)، اجعل الـ Headless = true
+        boolean isCI = System.getenv("CI") != null;
+        boolean headlessConfig = Boolean.parseBoolean(config.getProperty("headless", "true"));
+
+        BrowserType.LaunchOptions options = new BrowserType.LaunchOptions()
+                .setHeadless(isCI || headlessConfig); // لو CI، هيرن Headless غصباً عنه
+
+        Browser br = pw.chromium().launch(options);
         playwright.set(pw);
         browser.set(br);
     }

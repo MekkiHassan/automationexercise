@@ -20,15 +20,12 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Install System Dependencies for Ubuntu 24.04
+      # خطوة مهمة جداً: تثبيت مكتبات النظام اللي بيحتاجها Playwright للعمل في Linux بدون شاشة
+      - name: Install Playwright and Dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libasound2t64 libvpx9 libevent-2.1-7 libopus0 libsecret-1-0 libhyphen0 libx264-dev
-
-      - name: Install Playwright Browsers
-        env:
-          PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS: true
-        run: mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install chromium"
+          mvn install -DskipTests
+          mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install-deps chromium"
+          mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install chromium"
 
       - name: Run Tests
         run: mvn clean test -Dheadless=true
@@ -44,6 +41,16 @@ jobs:
           name: allure-results
           path: target/allure-results
 
+      - name: Deploy to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./target/site/allure-maven-plugin
+          force_orphan: true
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+
       - name: Send email on completion
         if: success() || failure()
         uses: dawidd6/action-send-mail@v3
@@ -57,16 +64,5 @@ jobs:
           body: |
             التيست خلص وحالته: ${{ job.status }}
             التقرير موجود أونلاين هنا: https://mekkihassan.github.io/automationexercise/
-          to: mekkihassan02@gmail.com,mekkohassan@gmail.com
+          to: mekkihassan02@gmail.com
           from: GitHub Actions
-
-      - name: Deploy to GitHub Pages
-        if: always()
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-            github_token: ${{ secrets.GITHUB_TOKEN }}
-            # ده المسار الافتراضي اللي الـ Plugin بيحط فيه التقرير بعد الـ mvn allure:report
-            publish_dir: ./target/site/allure-maven-plugin
-            force_orphan: true
-            user_name: 'github-actions[bot]'
-            user_email: 'github-actions[bot]@users.noreply.github.com'
